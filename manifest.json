@@ -1,7 +1,7 @@
 {
  "manifest_version": 3,
  "name": "GMGN Narrative Radar",
- "version": "0.5.2",
+ "version": "0.5.3",
  "description": "在 GMGN 战壕和搜索结果中标记叙事顺序、发射台、报价底池；可选本地链上索引和 four.meme 描述。只读。",
  "permissions": [
   "storage"
