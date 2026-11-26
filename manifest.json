@@ -1,0 +1,54 @@
+{
+ "manifest_version": 3,
+ "name": "GMGN Narrative Radar",
+ "version": "0.5.2",
+ "description": "在 GMGN 战壕和搜索结果中标记叙事顺序、发射台、报价底池；可选本地链上索引和 four.meme 描述。只读。",
+ "permissions": [
+  "storage"
+ ],
+ "host_permissions": [
+  "http://127.0.0.1/*",
+  "http://localhost/*",
+  "https://four.meme/*",
+  "https://openapi.gmgn.ai/*"
+ ],
+ "background": {
+  "service_worker": "background.js"
+ },
+ "action": {
+  "default_popup": "popup.html"
+ },
+ "content_scripts": [
+  {
+   "matches": [
+    "https://gmgn.ai/*",
+    "https://www.gmgn.ai/*"
+   ],
+   "js": [
+    "core.js",
+    "bridge.js"
+   ],
+   "run_at": "document_start",
+   "world": "MAIN"
+  },
+  {
+   "matches": [
+    "https://gmgn.ai/*",
+    "https://www.gmgn.ai/*"
+   ],
+   "js": [
+    "core.js",
+    "content.js"
+   ],
+   "css": [
+    "style.css"
+   ],
+   "run_at": "document_idle"
+  }
+ ],
+ "options_ui": {
+  "page": "popup.html",
+  "open_in_tab": true
+ },
+ "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmmlK45F/PtdwRg8kuFfsz6YB6+jMwb7mdEOiy81xE1XXw5O0chEjgt3LgT4sindE/ZZVUfS/3yYgufeuEStYP2nDy219N/xoWNsoFpmTVIvPohvy/51OnkHpeoSiKyhZY+LHEpNuNMnW9a1oo0YIUh1y4llRkNMs0zifq8VUl8EhaYlOjU9KjgIE4ehfxWUguZrkesUFHx1pcqHgeSOD9QZaOhLhGa9j6cjnXTaEI8hYQkATVe9ghhqYdRqnuC4inwvVp4sbSc0cj3mF66Q1HM3SyCWKx9f9Q+4XZJSxzPP+98FOWw6HgYxqzaHvXYPuVAsEbhV+kIJD/95IjbMnlwIDAQAB"
+}

@@ -1,0 +1,21 @@
+(() => {
+ const C={}; const chains=['bsc','sol','base','eth','robinhood','arc','stable','tron','monad','xlayer','hyperevm','megaeth','arbitrum','avalanche'];
+ C.chain=(v='')=>{let s=String(v).toLowerCase();return ({'56':'bsc','1':'eth','8453':'base','solana':'sol','ethereum':'eth','bnb':'bsc','bnbchain':'bsc'})[s]|| (chains.includes(s)?s:'');};
+ C.current=()=>{try{let u=new URL(location.href);return C.chain(u.searchParams.get('chain')||u.pathname.split('/')[1])||'bsc';}catch{return 'bsc';}};
+ C.address=v=>typeof v==='string'&&(/^(0x[a-f0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})$/i.test(v))? (v.startsWith('0x')?v.toLowerCase():v):'';
+ C.norm=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[\p{P}\p{S}\s]/gu,'');
+ C.time=v=>{let n=Number(v);if(!Number.isFinite(n))n=Date.parse(v);if(n>1e12)n/=1000;return n>1230768000&&n<Date.now()/1000+86400?Math.floor(n):0;};
+ C.str=v=>typeof v==='string'?v.trim().slice(0,180):'';
+ const pick=(...a)=>a.find(x=>typeof x==='string'&&x.trim())||'';
+ C.platform=v=>{let s=C.str(v),n=C.norm(s);if(!n)return '';const m={fourmeme:'Four.meme',four:'Four.meme',bnfourmeme:'Four.meme',fourmemeagent:'Four.meme Agent',fourxmodeagent:'Four.meme X',flap:'Flap',flaptax:'Flap Tax',flapstocks:'Flap Stocks',flapaioracle:'Flap AI',geniusfun:'Genius.fun',genius:'Genius.fun',pumpfun:'Pump.fun',pump:'Pump.fun',pumpmayhem:'Pump Mayhem',letsbonk:'LetsBONK',clanker:'Clanker',openfour:'OpenFour',poolpancake:'PancakeSwap',pooluniswap:'Uniswap',poolray:'Raydium',poolpumpamm:'PumpSwap'};return m[n]||s;};
+ C.quote=v=>{let s=C.str(v);return /^[\p{L}\p{N}.$_-]{1,20}$/u.test(s)?s.toUpperCase():'';};
+ C.token=(o,ch)=>{if(!o||typeof o!=='object'||Array.isArray(o))return null;let address=C.address(pick(o.token_address,o.address,o.contract_address,o.mint,o.tokenAddress));let symbol=C.str(pick(o.symbol,o.token_symbol,o.ticker,o.tokenSymbol));let name=C.str(pick(o.name,o.token_name,o.tokenName));if(!address||!symbol&&!name)return null;let chain=C.chain(o.chain||o.chain_id||o.chainId)||ch;if(!chain)return null;let pool=o.pool||o.main_pool||o.pool_info||{};let launch=C.platform(pick(o.launchpad_platform,o.launchpad,o.launchpad_name,o.launchpadPlatform));let quote=C.quote(pick(pool.quote_symbol,pool.quote_token_symbol,pool.quote_token?.symbol,o.quote_symbol,o.quote_token_symbol,o.quoteTokenSymbol,o.quote_token?.symbol));let created=C.time(o.creation_timestamp||o.created_timestamp||o.create_timestamp||o.created_at||o.created||o.create_time||o.creation_time);return {chain,address,symbol,name,launch,quote,created};};
+ C.extract=(data,ch)=>{const out=new Map(),seen=new WeakSet();let count=0;function walk(o,depth){if(!o||typeof o!=='object'||depth>9||++count>18000||seen.has(o))return;seen.add(o);let t=C.token(o,ch);if(t){let k=C.id(t);out.set(k,C.merge(out.get(k),t));}if(Array.isArray(o)){for(let a of o)walk(a,depth+1);}else{for(let [k,v] of Object.entries(o)){if(!/^(wallet|holders|traders|orders|positions|transactions|private|auth|user|session)/i.test(k))walk(v,depth+1);}}}walk(data,0);return [...out.values()];};
+ C.id=t=>`${t.chain}:${t.address}`;
+ C.merge=(a,b)=>{let x={...(a||{})};for(let [k,v] of Object.entries(b))if(v!==''&&v!==0&&v!=null)x[k]=v;return x;};
+ C.aliases=text=>{const m=new Map();for(let l of String(text||'').split('\n')){let a=l.split(/[=,，|]/).map(C.norm).filter(Boolean);for(let k of a)m.set(k,a[0]);}return m;};
+ C.key=(t,aliases)=>{let s=C.norm(t.symbol),n=C.norm(t.name);return aliases.get(s)||aliases.get(n)||s||n;};
+ C.group=(t,records,aliases)=>{let k=C.key(t,aliases);if(!k)return [];return records.filter(x=>x.chain===t.chain&&C.key(x,aliases)===k).sort((a,b)=>{if(a.created&&b.created)return a.created-b.created||C.id(a).localeCompare(C.id(b));if(a.created!==b.created)return a.created?-1:1;return (a.firstSeen||0)-(b.firstSeen||0)||C.id(a).localeCompare(C.id(b));});};
+ C.label=(t,group,checked)=>{let i=group.findIndex(x=>C.id(x)===C.id(t));if(i<0)return {text:'待查',kind:'unknown'};let ordered=group.every(x=>x.created)&&group.filter(x=>x.created===t.created).length===1;if(!ordered)return {text:`本地${i+1}?`,kind:'unknown'};if(i===0)return {text:checked?'新':'新?',kind:checked?'new':'unknown'};return {text:`${checked?'#':'≥'}${i+1}`,kind:'old'};};
+ globalThis.GNRCore=C;if(typeof module!=='undefined')module.exports=C;
+})();
